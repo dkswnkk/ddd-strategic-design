@@ -174,3 +174,236 @@ docker compose -p kitchenpos up -d
 | 테이블 미사용 중   | vacant state            | 아무 손님도 해당 테이블을 사용하고 있지 않음을 의미한다.                          |
 
 ## 모델링
+
+### 사용자가 상품과 메뉴를 등록할 때
+
+```mermaid
+sequenceDiagram
+    actor User as 사용자
+    participant Product as 상품
+    participant MenuGroup as 메뉴그룹
+    participant Menu as 메뉴
+    participant Policy as 정책
+    User ->> Product: 상품 등록 요청
+    Product ->> Policy: 상품 등록 정책 검증
+    Policy -->> Product: 검증 완료
+    Product -->> User: 상품 등록 완료
+    User ->> MenuGroup: 메뉴 그룹 등록 요청
+    MenuGroup ->> Policy: 메뉴 그룹 등록 정책 검증
+    Policy -->> MenuGroup: 검증 완료
+    MenuGroup -->> User: 메뉴 그룹 등록 완료
+    User ->> Menu: 메뉴 등록 요청
+    Menu ->> Policy: 메뉴 등록 정책 검증
+    Policy -->> Menu: 검증 완료
+    Menu -->> User: 메뉴 등록 완료
+
+```
+
+#### 상품 등록 정책
+
+1. 상품의 가격은 0원 이상이어야 한다.
+2. 상품의 이름은 비워 둘 수 없다.
+3. 상품의 이름에는 비속어가 포함될 수 없다.
+
+#### 메뉴 그룹 등록 정책
+
+1. 메뉴 그룹의 이름은 비워 둘 수 없다.
+
+#### 메뉴 등록 정책
+
+1. 메뉴의 이름은 비워 둘 수 없다.
+2. 메뉴의 이름에는 비속어가 포함될 수 없다.
+3. 메뉴의 가격은 0원 이상이어야 한다.
+4. 메뉴에 포함된 상품의 가격은 가격 정책을 지켜야 한다 (메뉴에 속한 상품 금액의 합은 메뉴의 가격보다 크거나 같아야 한다).
+5. 메뉴에 포함된 상품의 수량은 0 이상이어야 한다.
+6. 메뉴는 특정 메뉴 그룹에 속해야 한다.
+7. 메뉴의 가격이 메뉴에 속한 상품 금액의 합보다 높을 경우 메뉴를 숨겨야 한다.
+
+### 사용자가 상품과 메뉴의 가격을 변경할 때
+
+```mermaid
+sequenceDiagram
+    actor User as 사용자
+    participant Product as 상품
+    participant Menu as 메뉴
+    participant Policy as 정책
+    User ->> Product: 상품 가격 변경 요청
+    Product ->> Policy: 상품 가격 변경 정책 검증
+    Policy -->> Product: 검증 완료
+    Product -->> User: 상품 가격 변경 완료
+    Product ->> Policy: 상품 가격 변경 정책 검증
+    Policy -->> Menu: 가격이 높을 경우 메뉴 숨김 처리
+    User ->> Menu: 메뉴 가격 변경 요청
+    Menu ->> Policy: 메뉴 가격 변경 정책 검증
+    Policy -->> Menu: 검증 완료
+    Menu -->> User: 메뉴 가격 변경 완료
+```
+
+#### 상품 가격 변경 정책
+
+1. 변경하려는 가격은 0원 이상이어야 한다.
+2. 상품이 속해있는 메뉴 가격과 메뉴에 속해있는 모든 상품들의 가격 합계를 비교하여, 만약 메뉴의 가격이 속해있는 상품들의 총 합계 가격보다 높을 경우 자동으로 메뉴를 숨김 상태로 설정한다.
+
+#### 메뉴 가격 변경 정책
+
+1. 변경하려는 가격은 0원 이상이어야 한다.
+2. 변경하고자 하는 메뉴 가격이 현재 메뉴에 포함된 상품들의 총합 가격보다 같거나 낮아야 한다.
+
+### 사용자가 메뉴를 노출/숨길 때
+
+```mermaid
+sequenceDiagram
+    actor User as 사용자
+    participant Menu as 메뉴
+    participant Policy as 정책
+    User ->> Menu: 메뉴 노출 요청
+    Menu ->> Policy: 메뉴 노출 정책 검증
+    Policy -->> Menu: 검증 완료
+    Menu -->> User: 메뉴 노출 완료
+    User ->> Menu: 메뉴 숨김 요청
+    Menu ->> Policy: 메뉴 숨김 정책 검증
+    Policy -->> Menu: 검증 완료
+    Menu -->> User: 메뉴 숨김 완료
+
+```
+
+#### 메뉴 노출 정책
+
+1. 메뉴의 가격이 현재 메뉴에 포함된 상품들의 총합 가격보다 같거나 낮은 경우에만 메뉴를 노출 상태로 변경할 수 있다.
+
+#### 메뉴 숨김 정책
+
+1. 메뉴를 숨김 상태로 변경할 때는 메뉴 노출 때와 달리 상품들의 총합 가격을 검증하지 않는다.
+
+### 손님이 배달 주문을 할 때
+
+```mermaid
+sequenceDiagram
+    actor User as 사용자
+    participant Order as 주문
+    participant Policy as 정책
+    User ->> Order: 배달 주문 요청
+    Order ->> Policy: 배달 주문 정책 검증
+    Policy -->> Order: 검증 완료
+    Order -->> User: 주문 접수 중
+    User ->> Order: 주문 수락 요청
+    Order ->> Policy: 배달 주문 정책
+    Policy -->> Order: 검증 완료
+    Order -->> User: 주문 수락
+    User ->> Order: 배달 준비 완료 요청
+    Order ->> Policy: 배달 주문 정책
+    Policy -->> Order: 검증 완료
+    Order -->> User: 배달 준비 완료
+    User ->> Order: 배달 중 요청
+    Order ->> Policy: 배달 주문 정책
+    Policy -->> Order: 검증 완료
+    Order -->> User: 배달 중
+    User ->> Order: 배달 완료 요청
+    Order ->> Policy: 배달 주문 정책
+    Policy -->> Order: 검증 완료
+    Order -->> User: 배달 완료
+    User ->> Order: 주문 완료 요청
+    Order ->> Policy: 배달 주문 정책 검증
+    Policy -->> Order: 검증 완료
+    Order -->> User: 주문 완료
+
+```
+
+#### 배달 주문 정책
+
+1. 1개 이상의 등록된 메뉴로 배달 주문을 할 수 있다.
+2. 메뉴가 없으면 주문할 수 없다.
+3. 배달 주소는 비워 둘 수 없다.
+4. 숨겨진 메뉴는 주문할 수 없다.
+5. 주문한 메뉴의 가격은 실제 메뉴 가격과 일치해야 한다.
+6. 주문 접수 중인 주문만 주문 수락 할 수 있다.
+7. 주문 수락된 주문만 준비완료 변경할 수 있다.
+8. 배달 완료된 주문만 완료할 수 있다.
+
+### 손님이 포장 주문을 할 때
+
+```mermaid
+sequenceDiagram
+    actor User as 사용자
+    participant Order as 주문
+    participant Policy as 정책
+    User ->> Order: 포장 주문 요청
+    Order ->> Policy: 포장 주문 정책 검증
+    Policy -->> Order: 검증 완료
+    Order -->> User: 주문 접수 중
+    User ->> Order: 주문 수락 요청
+    Order ->> Policy: 포장 주문 정책 검증
+    Policy -->> Order: 검증 완료
+    Order -->> User: 주문 수락 완료
+    User ->> Order: 포장 준비 완료 요청
+    Order ->> Policy: 포장 주문 정책 검증
+    Policy -->> Order: 검증 완료
+    Order -->> User: 포장 준비 완료
+    User ->> Order: 주문 완료 요청
+    Order ->> Policy: 포장 주문 정책 검증
+    Policy -->> Order: 검증 완료
+    Order -->> User: 주문 완료
+```
+
+#### 포장 주문 등록 정책
+
+1. 1개 이상의 등록된 메뉴로 포장 주문을 등록할 수 있다.
+2. 메뉴가 없으면 등록할 수 없다.
+3. 숨겨진 메뉴는 주문할 수 없다.
+4. 주문한 메뉴의 가격은 실제 메뉴 가격과 일치해야 한다.
+5. 주문 접수 중인 주문만 주문 수락 할 수 있다.
+6. 주문 수락된 주문만 준비완료 변경할 수 있다.
+7. 준비 완료된 주문만 주문완료 할 수 있다.
+
+### 손님이 매장 내 주문을 할 때
+
+```mermaid
+sequenceDiagram
+    actor User as 사용자
+    participant OrderTable as 주문 테이블
+    participant Order as 주문
+    participant Policy as 정책
+    User ->> OrderTable: 테이블에 앉음 요청
+    OrderTable ->> Policy: 테이블 정책 검증
+    Policy -->> OrderTable: 검증 완료
+    OrderTable -->> User: 테이블에 앉음 완료
+    User ->> Order: 매장 주문 요청
+    Order ->> Policy: 매장 식사 주문 정책 검증
+    Policy -->> Order: 검증 완료
+    Order -->> User: 주문 접수 중
+    User ->> Order: 주문 수락 요청
+    Order ->> Policy: 매장 식사 주문 정책 검증
+    Policy -->> Order: 검증 완료
+    Order -->> User: 주문 수락
+    User ->> Order: 주문 준비 완료 요청
+    Order ->> Policy: 매장 식사 주문 정책 검증
+    Policy -->> Order: 검증 완료
+    Order -->> User: 주문 준비 완료
+    User ->> Order: 주문 완료 요청
+    Order ->> Policy: 매장 식사 주문 정책 검증
+    Policy -->> Order: 검증 완료
+    Order -->> User: 주문 완료
+    User ->> OrderTable: 테이블 치움 요청
+    OrderTable ->> Policy: 테이블 정책 검증
+    Policy -->> OrderTable: 검증 완료
+    OrderTable -->> User: 테이블 치움 완료
+```
+
+#### 테이블 정책
+
+1. 빈 테이블에는 매장 주문을 등록할 수 없다.
+2. 주문 테이블의 모든 매장 주문이 완료되면 빈 테이블로 설정한다.
+3. 주문 완료되지 않은 매장 주문이 있는 주문 테이블은 빈 테이블로 설정하지 않는다.
+
+#### 매장 식사 주문 정책
+
+1. 1개 이상의 등록된 메뉴로 매장 주문을 등록할 수 있다.
+2. 메뉴가 없으면 주문할 수 없다.
+3. 숨겨진 메뉴는 주문할 수 없다.
+4. 테이블을 사용중이지 않으면 주문할 수 없다.
+5. 주문한 메뉴의 가격은 실제 메뉴 가격과 일치해야 한다.
+6. 매장 주문은 주문 항목의 수량이 0 미만일 수 있다.
+7. 주문 접수 중인 주문만 주문 수락 할 수 있다.
+8. 주문 수락된 주문만 준비완료 변경할 수 있다.
+9. 준비 완료된 주문만 주문완료 할 수 있다.
+10. 주문 완료 시, 매장 내 주문의 상태를 검증한다.
