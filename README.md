@@ -186,7 +186,7 @@ sequenceDiagram
     Product ->> ProfanityCheck: 상품명 비속어 검증
     ProfanityCheck -->> Product: 검증 결과
     Product ->> Product: 상품 가격 검증
-    Product -->> User: 상품 등록 완료
+    Product ->> User: 상품 등록 완료
 ```
 
 #### 상품 등록 정책
@@ -203,7 +203,7 @@ sequenceDiagram
     participant MenuGroup as 메뉴그룹
     User ->> MenuGroup: 메뉴 그룹 등록 요청
     MenuGroup ->> MenuGroup: 메뉴 그룹명 검증
-    MenuGroup -->> User: 메뉴 그룹 등록 완료
+    MenuGroup ->> User: 메뉴 그룹 등록 완료
 ```
 
 #### 메뉴 그룹 등록 정책
@@ -227,7 +227,7 @@ sequenceDiagram
     Product -->> Menu: 검증 완료
     Menu ->> MenuGroup: 메뉴 그룹 존재 확인
     MenuGroup -->> Menu: 메뉴 그룹 확인 완료
-    Menu -->> User: 메뉴 등록 완료
+    Menu ->> User: 메뉴 등록 완료
 ```
 
 #### 메뉴 등록 정책
@@ -257,10 +257,12 @@ sequenceDiagram
     participant Menu as 메뉴
     User ->> Product: 상품 가격 변경 요청
     Product ->> Product: 가격 정책 검증
-    Product -->> User: 상품 가격 변경 완료
-    Product ->> Menu: 관련된 메뉴 가격 검증
+    Product ->> User: 상품 가격 변경 완료
+    Product -->> Menu: 상품 가격 변경 완료
     Menu ->> Menu: 관련 메뉴 가격 정책 검증
-    Menu -->> Product: 메뉴 숨김 처리 (가격이 높을 경우)
+    alt 가격이 높을 경우
+        Menu ->> Menu: 메뉴 숨김 처리
+    end
 ```
 
 #### 상품 가격 변경 정책
@@ -280,7 +282,7 @@ sequenceDiagram
     participant Menu as 메뉴
     User ->> Menu: 메뉴 가격 변경 요청
     Menu ->> Menu: 가격 변경 정책 검증
-    Menu -->> User: 메뉴 가격 변경 완료
+    Menu ->> User: 메뉴 가격 변경 완료
 ```
 
 #### 메뉴 가격 변경 정책
@@ -296,9 +298,9 @@ sequenceDiagram
     participant Menu as 메뉴
     User ->> Menu: 메뉴 노출 요청
     Menu ->> Menu: 메뉴 노출 정책 검증
-    Menu -->> User: 메뉴 노출 완료
+    Menu ->> User: 메뉴 노출 완료
     User ->> Menu: 메뉴 숨김 요청
-    Menu -->> User: 메뉴 숨김 완료
+    Menu ->> User: 메뉴 숨김 완료
 ```
 
 #### 메뉴 노출 정책
@@ -307,10 +309,6 @@ sequenceDiagram
 - 메뉴의 가격이 현재 메뉴에 포함된 상품들의 총합 가격보다 같거나 낮아야 한다.
 - 메뉴에 포함된 상품들의 총합 가격을 검증한다.
 - 상품 금액의 합이 메뉴의 가격보다 크거나 같아야 한다.
-
-#### 메뉴 숨김 정책
-
-- 메뉴를 숨김 상태로 변경할 때는 상품들의 총합 가격을 검증하지 않는다.
 
 ### 손님이 배달 주문 요청할 때
 
@@ -346,7 +344,7 @@ sequenceDiagram
     Order ->> Order: 주문 수락 정책 검증
     Order ->> DeliveryRider: 배달 담당자 호출
     DeliveryRider -->> Order: 배달 담당자 호출 완료
-    Order -->> Guest: 주문 수락 완료
+    Order ->> Guest: 주문 수락 완료
 ```
 
 #### 배달 주문 수락 정책
@@ -364,7 +362,7 @@ sequenceDiagram
     participant Order as 주문
     Guest ->> Order: 배달 준비 완료 요청
     Order ->> Order: 배달 준비 완료 정책 검증
-    Order -->> Guest: 배달 준비 완료
+    Order ->> Guest: 배달 준비 완료
 ```
 
 #### 배달 준비 완료 정책
@@ -379,7 +377,7 @@ sequenceDiagram
     participant Order as 주문
     Guest ->> Order: 배달 시작 요청
     Order ->> Order: 배달 시작 요청 정책 검증
-    Order -->> Guest: 배달 시작
+    Order ->> Guest: 배달 시작
 ```
 
 #### 배달 시작 요청 정책
@@ -394,7 +392,7 @@ sequenceDiagram
     participant Order as 주문
     Guest ->> Order: 배달 완료 요청
     Order ->> Order: 배달 완료 요청 정책 검증
-    Order -->> Guest: 배달 완료
+    Order ->> Guest: 배달 완료
 ```
 
 #### 배달 완료 요청 정책
@@ -409,7 +407,7 @@ sequenceDiagram
     participant Order as 사용자
     Guest ->> Order: 배달 주문 완료 요청
     Order ->> Order: 주문 완료 정책 검증
-    Order -->> Guest: 주문 완료
+    Order ->> Guest: 주문 완료
 ```
 
 #### 배달 주문 완료 요청 정책
@@ -427,7 +425,7 @@ sequenceDiagram
     Order ->> Menu: 메뉴 검증
     Menu -->> Order: 메뉴 확인 완료
     Order ->> Order: 주문 요청 정책 검증
-    Order -->> Guest: 주문 접수 완료
+    Order ->> Guest: 주문 접수 완료
 
 ```
 
@@ -448,7 +446,7 @@ sequenceDiagram
     participant Order as 주문
     Guest ->> Order: 포장 주문 수락 요청
     Order ->> Order: 주문 수락 정책 검증
-    Order -->> Guest: 주문 수락 완료
+    Order ->> Guest: 주문 수락 완료
 ```
 
 #### 포장 주문 수락 정책
@@ -463,7 +461,7 @@ sequenceDiagram
     participant Order as 주문
     Guest ->> Order: 포장 준비 완료 요청
     Order ->> Order: 주문 준비 완료 정책 검증
-    Order -->> Guest: 포장 준비 완료
+    Order ->> Guest: 포장 준비 완료
 ```
 
 #### 포장 준비 완료 정책
@@ -478,7 +476,7 @@ sequenceDiagram
     participant Order as 주문
     Guest ->> Order: 포장 주문 완료 요청
     Order ->> Order: 주문 완료 정책 검증
-    Order -->> Guest: 주문 완료
+    Order ->> Guest: 주문 완료
 ```
 
 #### 포장 주문 완료 요청 정책
@@ -499,7 +497,7 @@ sequenceDiagram
     Order ->> Order: 주문 항목 수량 정책 검증
     Order ->> Menu: 메뉴 검증
     Menu -->> Order: 메뉴 확인 완료
-    Order -->> Guest: 주문 접수 완료
+    Order ->> Guest: 주문 접수 완료
 ```
 
 #### 매장 주문 등록 정책
@@ -522,7 +520,7 @@ sequenceDiagram
     participant Order as 주문
     Guest ->> Order: 주문 수락 요청
     Order ->> Order: 주문 수락 검증
-    Order -->> Guest: 주문 수락
+    Order ->> Guest: 주문 수락
 ```
 
 #### 매장 주문 수락 정책
@@ -537,7 +535,7 @@ sequenceDiagram
     participant Order as 주문
     Guest ->> Order: 매장 식사 주문 준비 완료 요청
     Order ->> Order: 주문 준비 완료 검증
-    Order -->> Guest: 주문 준비 완료
+    Order ->> Guest: 주문 준비 완료
 ```
 
 #### 매장 주문 준비완료 정책
@@ -552,7 +550,7 @@ sequenceDiagram
     participant Order as 주문
     Guest ->> Order: 매장 식사 주문 완료 요청
     Order ->> Order: 주문 완료 정책 검증
-    Order -->> Guest: 주문 완료
+    Order ->> Guest: 주문 완료
 
 ```
 
@@ -568,7 +566,7 @@ sequenceDiagram
     participant OrderTable as 주문 테이블
     Guest ->> OrderTable: 테이블에 앉음 요청
     OrderTable ->> OrderTable: 테이블 상태 검증
-    OrderTable -->> Guest: 테이블에 앉음 완료
+    OrderTable ->> Guest: 테이블에 앉음 완료
 ```
 
 ### 테이블 앉음 정책
@@ -587,7 +585,7 @@ sequenceDiagram
     Guest ->> OrderTable: 테이블 치움 요청
     OrderTable ->> Order: 주문 완료 상태 확인
     Order -->> OrderTable: 모든 주문 완료 상태 확인
-    OrderTable -->> Guest: 테이블 치움 완료
+    OrderTable ->> Guest: 테이블 치움 완료
 ```
 
 #### 테이블 치움 정책
